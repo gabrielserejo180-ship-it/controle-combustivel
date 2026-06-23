@@ -246,6 +246,39 @@ tbody tr:hover{background:var(--surface-2);}
   .content{padding:18px 16px 60px;}
   .grid-kpi{grid-template-columns:repeat(2,1fr);}
 }
+/* ===== INDICADOR POR FUNCIONÁRIO ===== */
+.func-indicator-card{
+  background:var(--surface-2); border:1px solid var(--gray-200); border-radius:var(--radius-sm);
+  padding:14px; display:flex; flex-direction:column; gap:8px;
+}
+.func-indicator-card .fi-name{ font-size:13px; font-weight:600; color:var(--text-heading); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.func-indicator-card .fi-value{ font-family:'JetBrains Mono',monospace; font-size:17px; font-weight:700; color:var(--text-heading); }
+.func-indicator-card .fi-delta{ display:inline-flex; align-items:center; gap:5px; font-size:11.5px; font-weight:600; padding:3px 8px; border-radius:20px; }
+.func-indicator-card .fi-bar-track{ height:5px; background:var(--gray-300); border-radius:4px; margin-top:4px; }
+.func-indicator-card .fi-bar-fill{ height:100%; border-radius:4px; transition:width .4s ease; }
+
+/* ===== HEATMAP ===== */
+.heatmap-container{ display:flex; gap:4px; align-items:flex-start; }
+.heatmap-month-col{ display:flex; flex-direction:column; gap:3px; min-width:22px; }
+.heatmap-month-label{ font-size:10px; color:var(--ink-soft); text-align:center; margin-bottom:3px; font-family:'JetBrains Mono',monospace; }
+.heatmap-cell{
+  width:18px; height:18px; border-radius:3px; cursor:default;
+  transition:opacity .15s; position:relative;
+}
+.heatmap-cell:hover::after{
+  content:attr(data-tip); position:absolute; bottom:22px; left:50%; transform:translateX(-50%);
+  background:var(--navy-900); color:var(--ink); font-size:10px; padding:4px 8px; border-radius:6px;
+  white-space:nowrap; pointer-events:none; z-index:10; border:1px solid var(--gray-300);
+}
+.hm-0{ background:var(--surface-2); border:1px solid var(--gray-300); }
+.hm-1{ background:rgba(79,168,240,0.25); }
+.hm-2{ background:rgba(79,168,240,0.5); }
+.hm-3{ background:rgba(79,168,240,0.75); }
+.hm-4{ background:#4FA8F0; }
+.heatmap-legend{ display:flex; align-items:center; gap:5px; margin-top:10px; font-size:11px; color:var(--ink-soft); }
+.heatmap-legend .heatmap-cell{ width:14px; height:14px; cursor:default; }
+.heatmap-legend .heatmap-cell:hover::after{ display:none; }
+
 @media print{
   .sidebar, .topbar, .toolbar, .filters-bar, .no-print{display:none !important;}
   .main{margin-left:0;}
@@ -325,6 +358,24 @@ tbody tr:hover{background:var(--surface-2);}
             <div class="panel-head"><h3>Consumo por mês</h3></div>
             <div class="chart-box"><canvas id="chartMensal"></canvas></div>
           </div>
+        </div>
+
+        <!-- NOVO: Indicador do mês por funcionário -->
+        <div class="panel" style="margin-bottom:22px;">
+          <div class="panel-head"><h3>Indicador do mês por funcionário</h3><span class="hint" id="hintIndMes"></span></div>
+          <div id="indicadoresFuncionarios" style="display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:14px;"></div>
+        </div>
+
+        <!-- NOVO: Evolução de gastos por funcionário -->
+        <div class="panel" style="margin-bottom:22px;">
+          <div class="panel-head"><h3>Evolução de gastos por funcionário</h3><span class="hint">Últimos 6 meses</span></div>
+          <div class="chart-box" style="height:300px;"><canvas id="chartEvolucaoFunc"></canvas></div>
+        </div>
+
+        <!-- NOVO: Heatmap de abastecimentos -->
+        <div class="panel" style="margin-bottom:22px;">
+          <div class="panel-head"><h3>Dias com mais abastecimentos</h3><span class="hint">Últimos 12 meses</span></div>
+          <div id="heatmapWrap" style="overflow-x:auto; padding-bottom:8px;"></div>
         </div>
 
         <div class="panel">
@@ -828,6 +879,143 @@ function renderDashboard(){
   renderChartEvolucao();
   renderChartFuncionario();
   renderChartMensal();
+  renderIndicadoresPorFuncionario();
+  renderChartEvolucaoPorFuncionario();
+  renderHeatmap();
+}
+
+/* ============================================================
+   INDICADOR DO MÊS POR FUNCIONÁRIO
+============================================================ */
+function renderIndicadoresPorFuncionario(){
+  const hoje = new Date();
+  const mesAtual  = hoje.toISOString().slice(0,7);
+  const mesAnterior = new Date(hoje.getFullYear(), hoje.getMonth()-1, 1).toISOString().slice(0,7);
+
+  document.getElementById('hintIndMes').textContent = monthLabel(mesAtual);
+
+  const funcs = DB.funcionarios.filter(f=>f.status==='Ativo');
+  if(!funcs.length){
+    document.getElementById('indicadoresFuncionarios').innerHTML = '<div style="color:var(--ink-soft);font-size:13px;padding:10px 0;">Nenhum funcionário ativo cadastrado.</div>';
+    return;
+  }
+
+  // calcular max do mês para a barra relativa
+  const valsMes = funcs.map(f=>{
+    const ab = DB.abastecimentos.filter(a=>a.funcionario_id===f.id && monthKey(a.data_abastecimento)===mesAtual);
+    return ab.reduce((s,a)=>s+a.valor,0);
+  });
+  const maxMes = Math.max(...valsMes, 1);
+
+  const cards = funcs.map((f, i)=>{
+    const valAtual   = valsMes[i];
+    const valAnt     = DB.abastecimentos.filter(a=>a.funcionario_id===f.id && monthKey(a.data_abastecimento)===mesAnterior).reduce((s,a)=>s+a.valor,0);
+    const pct = valAnt>0 ? ((valAtual-valAnt)/valAnt)*100 : (valAtual>0 ? 100 : 0);
+    const cls  = pct>2 ? 'up' : pct<-2 ? 'down' : 'flat';
+    const arrow = cls==='up' ? '↑' : cls==='down' ? '↓' : '—';
+    const barColor = cls==='up' ? 'var(--red)' : cls==='down' ? 'var(--green)' : 'var(--accent)';
+    const barPct = (valAtual/maxMes*100).toFixed(1);
+    const deltaText = valAnt>0 ? `${arrow} ${Math.abs(pct).toFixed(1)}% vs mês ant.` : valAtual>0 ? '↑ Novo este mês' : '— Sem gastos';
+    return `
+      <div class="func-indicator-card">
+        <div class="fi-name" title="${f.nome}">${f.nome.split(' ')[0]} ${f.nome.split(' ')[1]||''}</div>
+        <div class="fi-value">${fmtBRL(valAtual)}</div>
+        <span class="fi-delta delta ${cls}">${deltaText}</span>
+        <div class="fi-bar-track"><div class="fi-bar-fill" style="width:${barPct}%;background:${barColor};"></div></div>
+      </div>`;
+  });
+  document.getElementById('indicadoresFuncionarios').innerHTML = cards.join('');
+}
+
+/* ============================================================
+   EVOLUÇÃO DE GASTOS POR FUNCIONÁRIO (multi-linha)
+============================================================ */
+const PALETTE = ['#4FA8F0','#3FCB95','#F0B65C','#F2706B','#B07DF2','#F07CB8','#5CE0D8','#FFD166'];
+
+function renderChartEvolucaoPorFuncionario(){
+  const ctx = document.getElementById('chartEvolucaoFunc');
+  const months = lastNMonthKeys(6);
+  const funcs = DB.funcionarios.filter(f=>f.status==='Ativo').slice(0,8);
+
+  const datasets = funcs.map((f, i)=>({
+    label: f.nome.split(' ')[0],
+    data: months.map(mk=> DB.abastecimentos.filter(a=>a.funcionario_id===f.id && monthKey(a.data_abastecimento)===mk).reduce((s,a)=>s+a.valor,0)),
+    borderColor: PALETTE[i%PALETTE.length],
+    backgroundColor: PALETTE[i%PALETTE.length]+'30',
+    fill: false,
+    tension: .35,
+    pointRadius: 4,
+    pointBackgroundColor: PALETTE[i%PALETTE.length],
+    borderWidth: 2
+  }));
+
+  destroyChart('evolucaoFunc');
+  charts.evolucaoFunc = new Chart(ctx, {
+    type:'line',
+    data:{ labels: months.map(monthLabel), datasets },
+    options:{
+      plugins:{
+        legend:{ display:true, position:'top', labels:{ color:'#8DA0B8', font:{size:12}, boxWidth:12, padding:14 } }
+      },
+      scales:{ y:{ ticks:{ callback:v=>fmtBRL(v) } } },
+      interaction:{ mode:'index', intersect:false }
+    }
+  });
+}
+
+/* ============================================================
+   HEATMAP DE ABASTECIMENTOS (últimos 12 meses)
+============================================================ */
+function renderHeatmap(){
+  const wrap = document.getElementById('heatmapWrap');
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+  const meses = lastNMonthKeys(12);
+
+  // agrupar abastecimentos por data
+  const countByDay = {};
+  DB.abastecimentos.forEach(a=>{
+    const d = a.data_abastecimento;
+    if(d) countByDay[d] = (countByDay[d]||0)+1;
+  });
+  const maxCount = Math.max(...Object.values(countByDay), 1);
+
+  function heatLevel(n){
+    if(!n) return 0;
+    const r = n/maxCount;
+    if(r<=0.25) return 1;
+    if(r<=0.5)  return 2;
+    if(r<=0.75) return 3;
+    return 4;
+  }
+
+  let html = '<div class="heatmap-container">';
+  meses.forEach(mk=>{
+    const [y,m] = mk.split('-').map(Number);
+    const daysInMonth = new Date(y, m, 0).getDate();
+    const label = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'][m-1];
+    html += `<div class="heatmap-month-col"><div class="heatmap-month-label">${label}</div>`;
+    for(let d=1; d<=daysInMonth; d++){
+      const iso = `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const dt = new Date(y,m-1,d);
+      if(dt > hoje){ html += `<div class="heatmap-cell hm-0"></div>`; continue; }
+      const cnt = countByDay[iso]||0;
+      const lvl = heatLevel(cnt);
+      const tip = cnt>0 ? `${d}/${m}/${y}: ${cnt} abastecimento(s)` : `${d}/${m}/${y}: nenhum`;
+      html += `<div class="heatmap-cell hm-${lvl}" data-tip="${tip}"></div>`;
+    }
+    html += '</div>';
+  });
+  html += '</div>';
+  html += `<div class="heatmap-legend">
+    <span>Menos</span>
+    <div class="heatmap-cell hm-0"></div>
+    <div class="heatmap-cell hm-1"></div>
+    <div class="heatmap-cell hm-2"></div>
+    <div class="heatmap-cell hm-3"></div>
+    <div class="heatmap-cell hm-4"></div>
+    <span>Mais</span>
+  </div>`;
+  wrap.innerHTML = html;
 }
 
 function renderGauge(){
