@@ -691,7 +691,8 @@ if(window.Chart){
 const Api = {
   get baseUrl(){ return localStorage.getItem('fuel_webapp_url') || ''; },
   async getAll(){
-    const res = await fetch(this.baseUrl, { method:'GET' });
+    const url = this.baseUrl + (this.baseUrl.includes('?') ? '&' : '?') + '_t=' + Date.now();
+    const res = await fetch(url, { method:'GET', cache:'no-store' });
     if(!res.ok) throw new Error('Falha ao buscar dados da planilha (HTTP '+res.status+').');
     return res.json();
   },
