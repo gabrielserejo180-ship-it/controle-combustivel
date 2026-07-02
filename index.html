@@ -225,8 +225,9 @@ tbody tr:hover{background:var(--surface-2);}
 .rank-num.gold{background:#C9962C;}
 .rank-bar-track{flex:1; height:8px; background:var(--surface-2); border-radius:6px; overflow:hidden;}
 .rank-bar-fill{height:100%; background:var(--accent); border-radius:6px;}
-.rank-info{display:flex; justify-content:space-between; min-width:240px;}
-.rank-info span:last-child{font-family:'JetBrains Mono'; font-weight:700; color:var(--text-heading);}
+.rank-info{display:flex; justify-content:space-between; align-items:baseline; gap:14px; flex:0 0 260px; min-width:0;}
+.rank-info span:first-child{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.rank-info span:last-child{font-family:'JetBrains Mono'; font-weight:700; color:var(--text-heading); white-space:nowrap; flex-shrink:0; margin-left:auto;}
 
 .empty-state{text-align:center; padding:60px 20px; color:var(--ink-soft);}
 .empty-state svg{width:54px; height:54px; opacity:.3; margin-bottom:14px;}
@@ -280,13 +281,29 @@ tbody tr:hover{background:var(--surface-2);}
 .heatmap-legend .heatmap-cell:hover::after{ display:none; }
 
 @media print{
+  @page{ size:A4; margin:14mm 12mm; }
   .sidebar, .topbar, .toolbar, .filters-bar, .no-print{display:none !important;}
   .main{margin-left:0;}
   body{background:#FFFFFF !important; color:#1C2733 !important;}
+  .content{padding:0 !important; max-width:100% !important; margin:0 !important;}
   .panel, .kpi-card, .modal{background:#FFFFFF !important; box-shadow:none !important; border-color:#DCE2EA !important;}
   h1,h2,h3,h4,.kpi-value,.rank-info span:last-child{color:#0B1F3A !important;}
   td,th{color:#1C2733 !important; border-color:#DCE2EA !important;}
   .view{display:block !important;}
+
+  /* ===== PAGINAÇÃO MULTI-PÁGINA ===== */
+  .table-wrap{overflow:visible !important;}
+  table{width:100% !important;}
+  thead{display:table-header-group;}  /* repete o cabeçalho em cada página */
+  tfoot{display:table-footer-group;}
+  tr{page-break-inside:avoid; break-inside:avoid;}
+  .panel{page-break-inside:auto;}      /* permite o painel se dividir entre páginas quando a tabela é longa */
+  .kpi-card, .func-indicator-card{page-break-inside:avoid; break-inside:avoid;}
+  .grid-kpi{page-break-inside:avoid; break-inside:avoid;}
+  .panel-head, h3{page-break-after:avoid; break-after:avoid;}
+  .rank-row{page-break-inside:avoid; break-inside:avoid;}
+  .chart-box, canvas{page-break-inside:avoid; break-inside:avoid;}
+  .report-section{page-break-inside:auto;}
 }
 </style>
 </head>
