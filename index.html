@@ -306,7 +306,11 @@ tbody tr:hover{background:var(--surface-2);}
   .report-section{page-break-inside:auto;}
 }
 .placa-tag{font-family:'JetBrains Mono',monospace; font-weight:700; font-size:12.5px; letter-spacing:1px; background:var(--surface-2); border:1px solid var(--gray-300); color:var(--text-label); padding:3px 8px; border-radius:6px; white-space:nowrap;}
-#inputPlaca{text-transform:uppercase; letter-spacing:2px; font-family:'JetBrains Mono',monospace; font-weight:700;}
+.veic-cell{display:flex; flex-direction:column; gap:4px; align-items:flex-start; font-size:12.5px; color:var(--ink-soft);}
+#funcPlaca{text-transform:uppercase; letter-spacing:2px; font-family:'JetBrains Mono',monospace; font-weight:700;}
+.veic-info{grid-column:1/-1; background:var(--surface-2); border:1px dashed var(--gray-300); border-radius:var(--radius-sm); padding:12px 14px; font-size:13.5px; color:var(--ink-soft); display:none;}
+.veic-info.show{display:block;}
+.veic-info b{color:var(--text-heading);}
 </style>
 </head>
 <body>
@@ -399,7 +403,7 @@ tbody tr:hover{background:var(--surface-2);}
 
         <div class="panel">
           <div class="panel-head"><h3>Últimos lançamentos</h3><button class="btn btn-secondary btn-sm" onclick="navigateTo('historico')">Ver histórico</button></div>
-          <div class="table-wrap"><table id="tabelaUltimos"><thead><tr><th>Data</th><th>Funcionário</th><th>Placa</th><th>Valor</th><th>Observação</th></tr></thead><tbody></tbody></table></div>
+          <div class="table-wrap"><table id="tabelaUltimos"><thead><tr><th>Data</th><th>Funcionário</th><th>Veículo</th><th>Valor</th><th>Observação</th></tr></thead><tbody></tbody></table></div>
         </div>
       </section>
 
@@ -420,6 +424,7 @@ tbody tr:hover{background:var(--surface-2);}
             <th data-sort="nome">Nome <span class="sort-arrow">⇅</span></th>
             <th data-sort="telefone">Telefone</th>
             <th data-sort="cargo">Cargo <span class="sort-arrow">⇅</span></th>
+            <th data-sort="placa">Veículo <span class="sort-arrow">⇅</span></th>
             <th data-sort="status">Status</th>
             <th data-sort="data_cadastro">Cadastrado em <span class="sort-arrow">⇅</span></th>
             <th>Ações</th>
@@ -443,15 +448,11 @@ tbody tr:hover{background:var(--surface-2);}
                 <select id="inputFuncionario" required><option value="">Selecione...</option></select>
                 <span class="error-msg">Selecione um funcionário.</span>
               </div>
+              <div class="veic-info" id="infoVeiculo"></div>
               <div class="field" id="field-valor">
                 <label>Valor abastecido<span class="req">*</span></label>
                 <input type="text" id="inputValor" inputmode="numeric" placeholder="R$ 0,00" required>
                 <span class="error-msg">Informe um valor válido.</span>
-              </div>
-              <div class="field" id="field-placa">
-                <label>Placa do veículo</label>
-                <input type="text" id="inputPlaca" maxlength="8" placeholder="ABC-1D23" autocomplete="off" autocapitalize="characters">
-                <span class="error-msg">Placa inválida. Use ABC-1234 ou ABC-1D23.</span>
               </div>
               <div class="field full">
                 <label>Observação</label>
@@ -502,7 +503,7 @@ tbody tr:hover{background:var(--surface-2);}
         <div class="toolbar">
           <div class="search-bar">
             <svg viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M21 21l-4.3-4.3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-            <input type="text" id="searchHistorico" placeholder="Buscar por nome ou placa...">
+            <input type="text" id="searchHistorico" placeholder="Buscar por nome, placa ou modelo...">
           </div>
           <div style="font-size:13px; color:var(--ink-soft);" id="historicoResumo"></div>
         </div>
@@ -511,7 +512,7 @@ tbody tr:hover{background:var(--surface-2);}
           <div class="table-wrap"><table id="tabelaHistorico"><thead><tr>
             <th data-sort="data_abastecimento">Data <span class="sort-arrow">⇅</span></th>
             <th data-sort="nome">Funcionário <span class="sort-arrow">⇅</span></th>
-            <th data-sort="placa">Placa <span class="sort-arrow">⇅</span></th>
+            <th data-sort="placa">Veículo <span class="sort-arrow">⇅</span></th>
             <th data-sort="valor">Valor <span class="sort-arrow">⇅</span></th>
             <th>Observação</th>
             <th>Ações</th>
@@ -542,7 +543,7 @@ tbody tr:hover{background:var(--surface-2);}
           <div class="grid-kpi" id="relFuncionarioKpi" style="grid-template-columns:repeat(4,1fr);"></div>
           <div class="panel">
             <div class="panel-head"><h3>Histórico do funcionário</h3></div>
-            <div class="table-wrap"><table id="tabelaRelFuncionario"><thead><tr><th>Data</th><th>Placa</th><th>Valor</th><th>Observação</th></tr></thead><tbody></tbody></table></div>
+            <div class="table-wrap"><table id="tabelaRelFuncionario"><thead><tr><th>Data</th><th>Valor</th><th>Observação</th></tr></thead><tbody></tbody></table></div>
           </div>
         </div>
 
@@ -581,7 +582,7 @@ tbody tr:hover{background:var(--surface-2);}
           <div class="grid-kpi" id="relPeriodoKpi" style="grid-template-columns:repeat(3,1fr);"></div>
           <div class="panel">
             <div class="panel-head"><h3>Registros do período</h3></div>
-            <div class="table-wrap"><table id="tabelaRelPeriodo"><thead><tr><th>Data</th><th>Funcionário</th><th>Placa</th><th>Valor</th><th>Observação</th></tr></thead><tbody></tbody></table></div>
+            <div class="table-wrap"><table id="tabelaRelPeriodo"><thead><tr><th>Data</th><th>Funcionário</th><th>Veículo</th><th>Valor</th><th>Observação</th></tr></thead><tbody></tbody></table></div>
           </div>
         </div>
       </section>
@@ -613,6 +614,15 @@ tbody tr:hover{background:var(--surface-2);}
             <input type="text" id="funcCargo" required>
             <span class="error-msg">Informe o cargo.</span>
           </div>
+          <div class="field" id="ffield-modelo">
+            <label>Modelo do veículo</label>
+            <input type="text" id="funcModelo" placeholder="Ex: Fiat Strada 2022">
+          </div>
+          <div class="field" id="ffield-placa">
+            <label>Placa do veículo</label>
+            <input type="text" id="funcPlaca" maxlength="8" placeholder="ABC-1D23" autocomplete="off" autocapitalize="characters">
+            <span class="error-msg">Placa inválida. Use ABC-1234 ou ABC-1D23.</span>
+          </div>
           <div class="field full">
             <label>Status</label>
             <select id="funcStatus"><option value="Ativo">Ativo</option><option value="Inativo">Inativo</option></select>
@@ -633,7 +643,7 @@ tbody tr:hover{background:var(--surface-2);}
     <div class="modal-head"><h3 id="histFuncTitle">Histórico</h3><button class="icon-btn" onclick="closeModal('modalHistFunc')">✕</button></div>
     <div class="modal-body">
       <div class="grid-kpi" id="histFuncKpi" style="grid-template-columns:repeat(3,1fr); margin-bottom:16px;"></div>
-      <div class="table-wrap"><table id="tabelaHistFunc"><thead><tr><th>Data</th><th>Placa</th><th>Valor</th><th>Observação</th></tr></thead><tbody></tbody></table></div>
+      <div class="table-wrap"><table id="tabelaHistFunc"><thead><tr><th>Data</th><th>Valor</th><th>Observação</th></tr></thead><tbody></tbody></table></div>
     </div>
   </div>
 </div>
@@ -729,8 +739,8 @@ async function loadDB(){
   setSyncBadge('loading');
   try{
     const data = await Api.getAll();
-    DB.funcionarios = (data.funcionarios||[]).map(f=>({...f, id:String(f.id)}));
-    DB.abastecimentos = (data.abastecimentos||[]).map(a=>({...a, id:String(a.id), funcionario_id:String(a.funcionario_id), valor:Number(a.valor), placa:formatPlaca(a.placa)}));
+    DB.funcionarios = (data.funcionarios||[]).map(f=>({...f, id:String(f.id), modelo:String(f.modelo||''), placa:formatPlaca(f.placa)}));
+    DB.abastecimentos = (data.abastecimentos||[]).map(a=>({...a, id:String(a.id), funcionario_id:String(a.funcionario_id), valor:Number(a.valor)}));
     setSyncBadge('ok');
     return true;
   }catch(e){
@@ -898,7 +908,7 @@ function renderDashboard(){
   const tbody = document.querySelector('#tabelaUltimos tbody');
   tbody.innerHTML = ultimos.length ? ultimos.map(a=>{
     const f = funcById(a.funcionario_id);
-    return `<tr><td>${fmtDate(a.data_abastecimento)}</td><td>${f?f.nome:'—'}</td><td>${placaTag(a.placa)}</td><td class="mono">${fmtBRL(a.valor)}</td><td>${a.observacao||'—'}</td></tr>`;
+    return `<tr><td>${fmtDate(a.data_abastecimento)}</td><td>${f?f.nome:'—'}</td><td>${veiculoCell(f)}</td><td class="mono">${fmtBRL(a.valor)}</td><td>${a.observacao||'—'}</td></tr>`;
   }).join('') : `<tr><td colspan="5" class="table-empty">Nenhum lançamento registrado ainda.</td></tr>`;
 
   renderGauge();
@@ -1134,7 +1144,7 @@ function lastNMonthKeys(n){
 ============================================================ */
 function renderFuncionarios(){
   const term = (document.getElementById('searchFuncionarios').value||'').toLowerCase();
-  let list = DB.funcionarios.filter(f => f.nome.toLowerCase().includes(term) || f.cargo.toLowerCase().includes(term));
+  let list = DB.funcionarios.filter(f => f.nome.toLowerCase().includes(term) || f.cargo.toLowerCase().includes(term) || (f.modelo||'').toLowerCase().includes(term) || (f.placa||'').toLowerCase().includes(term.toLowerCase()));
   list = applySort(list, 'funcionarios');
   const tbody = document.querySelector('#tabelaFuncionarios tbody');
   tbody.innerHTML = list.length ? list.map(f=>`
@@ -1142,6 +1152,7 @@ function renderFuncionarios(){
       <td>${f.nome}</td>
       <td>${f.telefone}</td>
       <td>${f.cargo}</td>
+      <td>${veiculoCell(f)}</td>
       <td><span class="badge ${f.status==='Ativo'?'ativo':'inativo'}">${f.status}</span></td>
       <td>${new Date(f.data_cadastro).toLocaleDateString('pt-BR')}</td>
       <td style="white-space:nowrap;">
@@ -1149,7 +1160,7 @@ function renderFuncionarios(){
         <button class="icon-btn" title="Editar" onclick="openFuncionarioModal('${f.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 113 3L7 19l-4 1 1-4 12.5-12.5z"/></svg></button>
         <button class="icon-btn danger" title="Excluir" onclick="confirmDeleteFuncionario('${f.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0l-1 14a2 2 0 01-2 2H7a2 2 0 01-2-2L4 6h16z"/></svg></button>
       </td>
-    </tr>`).join('') : `<tr><td colspan="6" class="table-empty">
+    </tr>`).join('') : `<tr><td colspan="7" class="table-empty">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M16 11a4 4 0 10-8 0 4 4 0 008 0z"/><path d="M4 21v-1a6 6 0 016-6h4a6 6 0 016 6v1"/></svg><br>
       Nenhum funcionário cadastrado ainda.<br><button class="btn btn-primary btn-sm" style="margin-top:12px;" onclick="openFuncionarioModal()">Cadastrar primeiro funcionário</button>
     </td></tr>`;
@@ -1167,6 +1178,8 @@ function openFuncionarioModal(id){
     document.getElementById('funcTelefone').value = f.telefone;
     document.getElementById('funcCargo').value = f.cargo;
     document.getElementById('funcStatus').value = f.status;
+    document.getElementById('funcModelo').value = f.modelo || '';
+    document.getElementById('funcPlaca').value = f.placa || '';
   } else {
     document.getElementById('modalFuncionarioTitle').textContent = 'Novo funcionário';
   }
@@ -1178,17 +1191,20 @@ document.getElementById('formFuncionario').addEventListener('submit', async e=>{
   const telefone = document.getElementById('funcTelefone').value.trim();
   const cargo = document.getElementById('funcCargo').value.trim();
   const status = document.getElementById('funcStatus').value;
+  const modelo = document.getElementById('funcModelo').value.trim();
+  const placa = normPlaca(document.getElementById('funcPlaca').value);
   const id = document.getElementById('funcId').value;
   let ok = true;
   ok = validateField('ffield-nome', !!nome) && ok;
   ok = validateField('ffield-telefone', !!telefone) && ok;
   ok = validateField('ffield-cargo', !!cargo) && ok;
+  ok = validateField('ffield-placa', !placa || isPlacaValida(placa)) && ok;
   if(!ok) return;
 
   const submitBtn = e.target.querySelector('button[type="submit"]');
   submitBtn.disabled = true; submitBtn.textContent = 'Salvando...';
   try{
-    await Api.post('saveFuncionario', { id: id||undefined, nome, telefone, cargo, status });
+    await Api.post('saveFuncionario', { id: id||undefined, nome, telefone, cargo, status, modelo, placa });
     await loadDB();
     showToast(id ? 'Funcionário atualizado com sucesso.' : 'Funcionário cadastrado com sucesso.');
     closeModal('modalFuncionario'); renderFuncionarios();
@@ -1235,8 +1251,8 @@ function viewHistoricoFuncionario(id){
     <div class="kpi-card"><div class="kpi-label">Abastecimentos</div><div class="kpi-value">${regs.length}</div></div>
     <div class="kpi-card"><div class="kpi-label">Média</div><div class="kpi-value">${fmtBRL(media)}</div></div>`;
   document.querySelector('#tabelaHistFunc tbody').innerHTML = regs.length ? regs.map(a=>`
-    <tr><td>${fmtDate(a.data_abastecimento)}</td><td>${placaTag(a.placa)}</td><td class="mono">${fmtBRL(a.valor)}</td><td>${a.observacao||'—'}</td></tr>`).join('')
-    : `<tr><td colspan="4" class="table-empty">Nenhum abastecimento registrado.</td></tr>`;
+    <tr><td>${fmtDate(a.data_abastecimento)}</td><td class="mono">${fmtBRL(a.valor)}</td><td>${a.observacao||'—'}</td></tr>`).join('')
+    : `<tr><td colspan="3" class="table-empty">Nenhum abastecimento registrado.</td></tr>`;
   openModal('modalHistFunc');
 }
 
@@ -1248,12 +1264,24 @@ function populateFuncionarioSelect(){
   const current = sel.value;
   sel.innerHTML = '<option value="">Selecione...</option>' + activeFuncionarios().map(f=>`<option value="${f.id}">${f.nome}</option>`).join('');
   sel.value = current;
+  updateInfoVeiculo();
   if(!document.getElementById('inputData').value) document.getElementById('inputData').value = todayISO();
 }
 function resetFormAbastecimento(){
   document.getElementById('formAbastecimento').reset();
   document.getElementById('inputData').value = todayISO();
   clearFormErrors(document.getElementById('formAbastecimento'));
+  updateInfoVeiculo();
+}
+document.getElementById('inputFuncionario').addEventListener('change', updateInfoVeiculo);
+function updateInfoVeiculo(){
+  const box = document.getElementById('infoVeiculo');
+  const f = funcById(document.getElementById('inputFuncionario').value);
+  if(!f){ box.className='veic-info'; box.innerHTML=''; return; }
+  box.className='veic-info show';
+  box.innerHTML = (f.modelo || f.placa)
+    ? `🚗 Veículo: <b>${f.modelo || 'modelo não informado'}</b> ${f.placa ? placaTag(f.placa) : ''}`
+    : `Este funcionário não tem veículo cadastrado. <a href="#" style="color:var(--accent);" onclick="event.preventDefault(); navigateTo('funcionarios'); openFuncionarioModal('${f.id}');">Cadastrar agora</a>`;
 }
 document.getElementById('formAbastecimento').addEventListener('submit', async e=>{
   e.preventDefault();
@@ -1262,19 +1290,17 @@ document.getElementById('formAbastecimento').addEventListener('submit', async e=
   const valorStr = document.getElementById('inputValor').value;
   const valor = parseCurrencyValue(valorStr);
   const obs = document.getElementById('inputObservacao').value.trim();
-  const placa = normPlaca(document.getElementById('inputPlaca').value);
 
   let ok = true;
   ok = validateField('field-data', !!data) && ok;
   ok = validateField('field-funcionario', !!funcId) && ok;
   ok = validateField('field-valor', !isNaN(valor) && valor>0) && ok;
-  ok = validateField('field-placa', !placa || isPlacaValida(placa)) && ok;
   if(!ok) return;
 
   const submitBtn = e.target.querySelector('button[type="submit"]');
   submitBtn.disabled = true; submitBtn.textContent = 'Salvando...';
   try{
-    await Api.post('saveAbastecimento', { funcionario_id: funcId, data_abastecimento: data, valor, observacao: obs, placa });
+    await Api.post('saveAbastecimento', { funcionario_id: funcId, data_abastecimento: data, valor, observacao: obs });
     await loadDB();
     showToast('Abastecimento registrado com sucesso.');
     resetFormAbastecimento();
@@ -1288,13 +1314,17 @@ document.getElementById('formAbastecimento').addEventListener('submit', async e=
 });
 
 /* ============================================================
-   PLACA DO VEÍCULO (padrão antigo ABC-1234 e Mercosul ABC1D23)
+   VEÍCULO DO FUNCIONÁRIO (placa antiga ABC-1234 e Mercosul ABC1D23)
 ============================================================ */
 function normPlaca(v){ return String(v||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,7); }
 function isPlacaValida(p){ return /^[A-Z]{3}[0-9]{4}$/.test(p) || /^[A-Z]{3}[0-9][A-Z][0-9]{2}$/.test(p); }
 function formatPlaca(v){ const p = normPlaca(v); return p.length>3 ? p.slice(0,3)+'-'+p.slice(3) : p; }
-function placaTag(v){ const p = formatPlaca(v); return p ? `<span class="placa-tag">${p}</span>` : '—'; }
-document.getElementById('inputPlaca').addEventListener('input', e=>{ e.target.value = formatPlaca(e.target.value); });
+function placaTag(v){ const p = formatPlaca(v); return p ? `<span class="placa-tag">${p}</span>` : ''; }
+function veiculoCell(f){
+  if(!f || (!f.placa && !f.modelo)) return '—';
+  return `<div class="veic-cell">${placaTag(f.placa)}${f.modelo ? '<span>'+f.modelo+'</span>' : ''}</div>`;
+}
+document.getElementById('funcPlaca').addEventListener('input', e=>{ e.target.value = formatPlaca(e.target.value); });
 
 /* ============================================================
    FORM HELPERS
@@ -1357,7 +1387,7 @@ function getFilteredHistorico(){
     if(fFim && a.data_abastecimento > fFim) return false;
     if(!isNaN(fMin) && a.valor < fMin) return false;
     if(!isNaN(fMax) && a.valor > fMax) return false;
-    if(term && !((f && f.nome.toLowerCase().includes(term)) || (a.placa||'').toLowerCase().includes(term.replace(/[^a-z0-9]/g,'')))) return false;
+    if(term && !(f && (f.nome.toLowerCase().includes(term) || (f.modelo||'').toLowerCase().includes(term) || (f.placa||'').toLowerCase().includes(term)))) return false;
     return true;
   });
 }
@@ -1365,7 +1395,7 @@ function getFilteredHistorico(){
 function renderHistorico(){
   populateFiltroFuncionario(); populateFiltroMes();
   let list = getFilteredHistorico();
-  list = applySort(list.map(a=>({...a, nome: (funcById(a.funcionario_id)||{}).nome || ''})), 'historico');
+  list = applySort(list.map(a=>({...a, nome: (funcById(a.funcionario_id)||{}).nome || '', placa: (funcById(a.funcionario_id)||{}).placa || ''})), 'historico');
   const total = list.reduce((s,a)=>s+a.valor,0);
   document.getElementById('historicoResumo').textContent = `${list.length} registro(s) · Total: ${fmtBRL(total)}`;
   const tbody = document.querySelector('#tabelaHistorico tbody');
@@ -1374,7 +1404,7 @@ function renderHistorico(){
     return `<tr>
       <td>${fmtDate(a.data_abastecimento)}</td>
       <td>${f?f.nome:'—'}</td>
-      <td>${placaTag(a.placa)}</td>
+      <td>${veiculoCell(f)}</td>
       <td class="mono">${fmtBRL(a.valor)}</td>
       <td>${a.observacao||'—'}</td>
       <td><button class="icon-btn danger" title="Excluir" onclick="confirmDeleteAbastecimento('${a.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0l-1 14a2 2 0 01-2 2H7a2 2 0 01-2-2L4 6h16z"/></svg></button></td>
@@ -1470,8 +1500,8 @@ function renderRelatorioFuncionario(){
     <div class="kpi-card"><div class="kpi-label">Média de gasto</div><div class="kpi-value">${fmtBRL(media)}</div></div>
     <div class="kpi-card"><div class="kpi-label">Último abastecimento</div><div class="kpi-value small">${ultimo?fmtDate(ultimo.data_abastecimento):'—'}</div></div>`;
   document.querySelector('#tabelaRelFuncionario tbody').innerHTML = regs.length ? regs.map(a=>`
-    <tr><td>${fmtDate(a.data_abastecimento)}</td><td>${placaTag(a.placa)}</td><td class="mono">${fmtBRL(a.valor)}</td><td>${a.observacao||'—'}</td></tr>`).join('')
-    : `<tr><td colspan="4" class="table-empty">Nenhum abastecimento registrado para este funcionário.</td></tr>`;
+    <tr><td>${fmtDate(a.data_abastecimento)}</td><td class="mono">${fmtBRL(a.valor)}</td><td>${a.observacao||'—'}</td></tr>`).join('')
+    : `<tr><td colspan="3" class="table-empty">Nenhum abastecimento registrado para este funcionário.</td></tr>`;
 }
 
 function renderRelatorioMensal(){
@@ -1509,7 +1539,7 @@ function gerarRelatorioPeriodo(){
     <div class="kpi-card"><div class="kpi-label">Quantidade de registros</div><div class="kpi-value">${regs.length}</div></div>`;
   document.querySelector('#tabelaRelPeriodo tbody').innerHTML = regs.length ? regs.map(a=>{
     const f = funcById(a.funcionario_id);
-    return `<tr><td>${fmtDate(a.data_abastecimento)}</td><td>${f?f.nome:'—'}</td><td>${placaTag(a.placa)}</td><td class="mono">${fmtBRL(a.valor)}</td><td>${a.observacao||'—'}</td></tr>`;
+    return `<tr><td>${fmtDate(a.data_abastecimento)}</td><td>${f?f.nome:'—'}</td><td>${veiculoCell(f)}</td><td class="mono">${fmtBRL(a.valor)}</td><td>${a.observacao||'—'}</td></tr>`;
   }).join('') : `<tr><td colspan="5" class="table-empty">Nenhum registro no período selecionado.</td></tr>`;
 }
 
@@ -1526,7 +1556,7 @@ function exportExcelFuncionario(){
   const id = document.getElementById('relFuncionarioSelect').value;
   const f = funcById(id);
   if(!f){ showToast('Nenhum funcionário selecionado.', true); return; }
-  const regs = abastecimentosOf(id).map(a=>({Data:fmtDate(a.data_abastecimento), Placa:a.placa||'', Valor:a.valor, Observação:a.observacao||''}));
+  const regs = abastecimentosOf(id).map(a=>({Data:fmtDate(a.data_abastecimento), Valor:a.valor, Observação:a.observacao||''}));
   exportToExcel(regs, `relatorio_${f.nome.replace(/\s+/g,'_')}.xlsx`, f.nome);
   showToast('Relatório exportado.');
 }
@@ -1534,7 +1564,7 @@ function exportExcelMensal(){
   const mk = document.getElementById('relMesSelect').value;
   const regs = DB.abastecimentos.filter(a=>monthKey(a.data_abastecimento)===mk).map(a=>{
     const f = funcById(a.funcionario_id);
-    return {Data:fmtDate(a.data_abastecimento), Funcionário:f?f.nome:'—', Placa:a.placa||'', Valor:a.valor, Observação:a.observacao||''};
+    return {Data:fmtDate(a.data_abastecimento), Funcionário:f?f.nome:'—', Modelo:f?f.modelo||'':'', Placa:f?f.placa||'':'', Valor:a.valor, Observação:a.observacao||''};
   });
   exportToExcel(regs, `relatorio_mensal_${mk}.xlsx`, 'Mensal');
   showToast('Relatório exportado.');
@@ -1544,7 +1574,7 @@ function exportExcelPeriodo(){
   if(!ini||!fim){ showToast('Gere o relatório antes de exportar.', true); return; }
   const regs = DB.abastecimentos.filter(a=>a.data_abastecimento>=ini && a.data_abastecimento<=fim).map(a=>{
     const f = funcById(a.funcionario_id);
-    return {Data:fmtDate(a.data_abastecimento), Funcionário:f?f.nome:'—', Placa:a.placa||'', Valor:a.valor, Observação:a.observacao||''};
+    return {Data:fmtDate(a.data_abastecimento), Funcionário:f?f.nome:'—', Modelo:f?f.modelo||'':'', Placa:f?f.placa||'':'', Valor:a.valor, Observação:a.observacao||''};
   });
   exportToExcel(regs, `relatorio_periodo_${ini}_a_${fim}.xlsx`, 'Período');
   showToast('Relatório exportado.');
