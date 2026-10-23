@@ -540,6 +540,7 @@ tbody tr:hover{background:var(--surface-2);}
               <button class="btn btn-primary" onclick="window.print()">Imprimir / PDF</button>
             </div>
           </div>
+          <div id="relFuncionarioInfo" style="margin-bottom:14px; font-size:15px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;"></div>
           <div class="grid-kpi" id="relFuncionarioKpi" style="grid-template-columns:repeat(4,1fr);"></div>
           <div class="panel">
             <div class="panel-head"><h3>Histórico do funcionário</h3></div>
@@ -1502,6 +1503,9 @@ function renderRelatorioFuncionario(){
   const total = regs.reduce((s,a)=>s+a.valor,0);
   const media = regs.length ? total/regs.length : 0;
   const ultimo = regs[0];
+  document.getElementById('relFuncionarioInfo').innerHTML = f
+    ? `<b>${f.nome}</b>${f.cargo ? ' · '+f.cargo : ''} &nbsp;🏍️ ${(f.modelo||f.placa) ? `<b>${f.modelo||'modelo não informado'}</b> ${placaTag(f.placa)}` : '<span style="color:var(--ink-soft)">Veículo não cadastrado</span>'}`
+    : '';
   document.getElementById('relFuncionarioKpi').innerHTML = `
     <div class="kpi-card"><div class="kpi-label">Abastecimentos</div><div class="kpi-value">${regs.length}</div></div>
     <div class="kpi-card"><div class="kpi-label">Total gasto</div><div class="kpi-value">${fmtBRL(total)}</div></div>
@@ -1528,7 +1532,7 @@ function renderRelatorioMensal(){
     const f = funcById(id);
     return `<div class="rank-row">
       <div class="rank-num ${i===0?'gold':''}">${i+1}</div>
-      <div class="rank-info"><span>${f?f.nome:'—'}</span><span>${fmtBRL(v)}</span></div>
+      <div class="rank-info"><span>${f?f.nome:'—'}${f && (f.modelo||f.placa) ? ` <small style="color:var(--ink-soft)">· ${f.modelo||''}</small> ${placaTag(f.placa)}` : ''}</span><span>${fmtBRL(v)}</span></div>
       <div class="rank-bar-track" style="flex:1; margin-left:10px;"><div class="rank-bar-fill" style="width:${(v/max*100)}%"></div></div>
     </div>`;
   }).join('') : `<div class="table-empty">Nenhum dado disponível para este mês.</div>`;
@@ -1564,7 +1568,7 @@ function exportExcelFuncionario(){
   const id = document.getElementById('relFuncionarioSelect').value;
   const f = funcById(id);
   if(!f){ showToast('Nenhum funcionário selecionado.', true); return; }
-  const regs = abastecimentosOf(id).map(a=>({Data:fmtDate(a.data_abastecimento), Valor:a.valor, Observação:a.observacao||''}));
+  const regs = abastecimentosOf(id).map(a=>({Data:fmtDate(a.data_abastecimento), Funcionário:f.nome, Modelo:f.modelo||'', Placa:f.placa||'', Valor:a.valor, Observação:a.observacao||''}));
   exportToExcel(regs, `relatorio_${f.nome.replace(/\s+/g,'_')}.xlsx`, f.nome);
   showToast('Relatório exportado.');
 }
