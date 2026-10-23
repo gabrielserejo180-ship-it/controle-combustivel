@@ -739,6 +739,9 @@ async function loadDB(){
   setSyncBadge('loading');
   try{
     const data = await Api.getAll();
+    if(!data.versao || data.versao < 2){
+      showToast('Apps Script desatualizado: cole o novo código e crie uma NOVA IMPLANTAÇÃO para salvar modelo e placa.', true);
+    }
     DB.funcionarios = (data.funcionarios||[]).map(f=>({...f, id:String(f.id), modelo:String(f.modelo||''), placa:formatPlaca(f.placa)}));
     DB.abastecimentos = (data.abastecimentos||[]).map(a=>({...a, id:String(a.id), funcionario_id:String(a.funcionario_id), valor:Number(a.valor)}));
     setSyncBadge('ok');
@@ -1204,9 +1207,14 @@ document.getElementById('formFuncionario').addEventListener('submit', async e=>{
   const submitBtn = e.target.querySelector('button[type="submit"]');
   submitBtn.disabled = true; submitBtn.textContent = 'Salvando...';
   try{
-    await Api.post('saveFuncionario', { id: id||undefined, nome, telefone, cargo, status, modelo, placa });
+    const saved = await Api.post('saveFuncionario', { id: id||undefined, nome, telefone, cargo, status, modelo, placa });
     await loadDB();
-    showToast(id ? 'Funcionário atualizado com sucesso.' : 'Funcionário cadastrado com sucesso.');
+    const check = funcById((saved && saved.id) || id);
+    if(check && ((modelo && check.modelo !== modelo) || (placa && normPlaca(check.placa) !== placa))){
+      showToast('Salvou, mas modelo/placa não voltaram da planilha. Confira os cabeçalhos "modelo" e "placa" e a nova implantação do Apps Script.', true);
+    } else {
+      showToast(id ? 'Funcionário atualizado com sucesso.' : 'Funcionário cadastrado com sucesso.');
+    }
     closeModal('modalFuncionario'); renderFuncionarios();
   }catch(err){
     showToast('Não foi possível salvar: '+err.message, true);
