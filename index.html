@@ -305,6 +305,8 @@ tbody tr:hover{background:var(--surface-2);}
   .chart-box, canvas{page-break-inside:avoid; break-inside:avoid;}
   .report-section{page-break-inside:auto;}
 }
+.placa-tag{font-family:'JetBrains Mono',monospace; font-weight:700; font-size:12.5px; letter-spacing:1px; background:var(--surface-2); border:1px solid var(--gray-300); color:var(--text-label); padding:3px 8px; border-radius:6px; white-space:nowrap;}
+#inputPlaca{text-transform:uppercase; letter-spacing:2px; font-family:'JetBrains Mono',monospace; font-weight:700;}
 </style>
 </head>
 <body>
@@ -397,7 +399,7 @@ tbody tr:hover{background:var(--surface-2);}
 
         <div class="panel">
           <div class="panel-head"><h3>Últimos lançamentos</h3><button class="btn btn-secondary btn-sm" onclick="navigateTo('historico')">Ver histórico</button></div>
-          <div class="table-wrap"><table id="tabelaUltimos"><thead><tr><th>Data</th><th>Funcionário</th><th>Valor</th><th>Observação</th></tr></thead><tbody></tbody></table></div>
+          <div class="table-wrap"><table id="tabelaUltimos"><thead><tr><th>Data</th><th>Funcionário</th><th>Placa</th><th>Valor</th><th>Observação</th></tr></thead><tbody></tbody></table></div>
         </div>
       </section>
 
@@ -445,6 +447,11 @@ tbody tr:hover{background:var(--surface-2);}
                 <label>Valor abastecido<span class="req">*</span></label>
                 <input type="text" id="inputValor" inputmode="numeric" placeholder="R$ 0,00" required>
                 <span class="error-msg">Informe um valor válido.</span>
+              </div>
+              <div class="field" id="field-placa">
+                <label>Placa do veículo</label>
+                <input type="text" id="inputPlaca" maxlength="8" placeholder="ABC-1D23" autocomplete="off" autocapitalize="characters">
+                <span class="error-msg">Placa inválida. Use ABC-1234 ou ABC-1D23.</span>
               </div>
               <div class="field full">
                 <label>Observação</label>
@@ -495,7 +502,7 @@ tbody tr:hover{background:var(--surface-2);}
         <div class="toolbar">
           <div class="search-bar">
             <svg viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M21 21l-4.3-4.3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-            <input type="text" id="searchHistorico" placeholder="Buscar por nome...">
+            <input type="text" id="searchHistorico" placeholder="Buscar por nome ou placa...">
           </div>
           <div style="font-size:13px; color:var(--ink-soft);" id="historicoResumo"></div>
         </div>
@@ -504,6 +511,7 @@ tbody tr:hover{background:var(--surface-2);}
           <div class="table-wrap"><table id="tabelaHistorico"><thead><tr>
             <th data-sort="data_abastecimento">Data <span class="sort-arrow">⇅</span></th>
             <th data-sort="nome">Funcionário <span class="sort-arrow">⇅</span></th>
+            <th data-sort="placa">Placa <span class="sort-arrow">⇅</span></th>
             <th data-sort="valor">Valor <span class="sort-arrow">⇅</span></th>
             <th>Observação</th>
             <th>Ações</th>
@@ -534,7 +542,7 @@ tbody tr:hover{background:var(--surface-2);}
           <div class="grid-kpi" id="relFuncionarioKpi" style="grid-template-columns:repeat(4,1fr);"></div>
           <div class="panel">
             <div class="panel-head"><h3>Histórico do funcionário</h3></div>
-            <div class="table-wrap"><table id="tabelaRelFuncionario"><thead><tr><th>Data</th><th>Valor</th><th>Observação</th></tr></thead><tbody></tbody></table></div>
+            <div class="table-wrap"><table id="tabelaRelFuncionario"><thead><tr><th>Data</th><th>Placa</th><th>Valor</th><th>Observação</th></tr></thead><tbody></tbody></table></div>
           </div>
         </div>
 
@@ -573,7 +581,7 @@ tbody tr:hover{background:var(--surface-2);}
           <div class="grid-kpi" id="relPeriodoKpi" style="grid-template-columns:repeat(3,1fr);"></div>
           <div class="panel">
             <div class="panel-head"><h3>Registros do período</h3></div>
-            <div class="table-wrap"><table id="tabelaRelPeriodo"><thead><tr><th>Data</th><th>Funcionário</th><th>Valor</th><th>Observação</th></tr></thead><tbody></tbody></table></div>
+            <div class="table-wrap"><table id="tabelaRelPeriodo"><thead><tr><th>Data</th><th>Funcionário</th><th>Placa</th><th>Valor</th><th>Observação</th></tr></thead><tbody></tbody></table></div>
           </div>
         </div>
       </section>
@@ -625,7 +633,7 @@ tbody tr:hover{background:var(--surface-2);}
     <div class="modal-head"><h3 id="histFuncTitle">Histórico</h3><button class="icon-btn" onclick="closeModal('modalHistFunc')">✕</button></div>
     <div class="modal-body">
       <div class="grid-kpi" id="histFuncKpi" style="grid-template-columns:repeat(3,1fr); margin-bottom:16px;"></div>
-      <div class="table-wrap"><table id="tabelaHistFunc"><thead><tr><th>Data</th><th>Valor</th><th>Observação</th></tr></thead><tbody></tbody></table></div>
+      <div class="table-wrap"><table id="tabelaHistFunc"><thead><tr><th>Data</th><th>Placa</th><th>Valor</th><th>Observação</th></tr></thead><tbody></tbody></table></div>
     </div>
   </div>
 </div>
@@ -722,7 +730,7 @@ async function loadDB(){
   try{
     const data = await Api.getAll();
     DB.funcionarios = (data.funcionarios||[]).map(f=>({...f, id:String(f.id)}));
-    DB.abastecimentos = (data.abastecimentos||[]).map(a=>({...a, id:String(a.id), funcionario_id:String(a.funcionario_id), valor:Number(a.valor)}));
+    DB.abastecimentos = (data.abastecimentos||[]).map(a=>({...a, id:String(a.id), funcionario_id:String(a.funcionario_id), valor:Number(a.valor), placa:formatPlaca(a.placa)}));
     setSyncBadge('ok');
     return true;
   }catch(e){
@@ -890,8 +898,8 @@ function renderDashboard(){
   const tbody = document.querySelector('#tabelaUltimos tbody');
   tbody.innerHTML = ultimos.length ? ultimos.map(a=>{
     const f = funcById(a.funcionario_id);
-    return `<tr><td>${fmtDate(a.data_abastecimento)}</td><td>${f?f.nome:'—'}</td><td class="mono">${fmtBRL(a.valor)}</td><td>${a.observacao||'—'}</td></tr>`;
-  }).join('') : `<tr><td colspan="4" class="table-empty">Nenhum lançamento registrado ainda.</td></tr>`;
+    return `<tr><td>${fmtDate(a.data_abastecimento)}</td><td>${f?f.nome:'—'}</td><td>${placaTag(a.placa)}</td><td class="mono">${fmtBRL(a.valor)}</td><td>${a.observacao||'—'}</td></tr>`;
+  }).join('') : `<tr><td colspan="5" class="table-empty">Nenhum lançamento registrado ainda.</td></tr>`;
 
   renderGauge();
   renderChartEvolucao();
@@ -1227,8 +1235,8 @@ function viewHistoricoFuncionario(id){
     <div class="kpi-card"><div class="kpi-label">Abastecimentos</div><div class="kpi-value">${regs.length}</div></div>
     <div class="kpi-card"><div class="kpi-label">Média</div><div class="kpi-value">${fmtBRL(media)}</div></div>`;
   document.querySelector('#tabelaHistFunc tbody').innerHTML = regs.length ? regs.map(a=>`
-    <tr><td>${fmtDate(a.data_abastecimento)}</td><td class="mono">${fmtBRL(a.valor)}</td><td>${a.observacao||'—'}</td></tr>`).join('')
-    : `<tr><td colspan="3" class="table-empty">Nenhum abastecimento registrado.</td></tr>`;
+    <tr><td>${fmtDate(a.data_abastecimento)}</td><td>${placaTag(a.placa)}</td><td class="mono">${fmtBRL(a.valor)}</td><td>${a.observacao||'—'}</td></tr>`).join('')
+    : `<tr><td colspan="4" class="table-empty">Nenhum abastecimento registrado.</td></tr>`;
   openModal('modalHistFunc');
 }
 
@@ -1254,17 +1262,19 @@ document.getElementById('formAbastecimento').addEventListener('submit', async e=
   const valorStr = document.getElementById('inputValor').value;
   const valor = parseCurrencyValue(valorStr);
   const obs = document.getElementById('inputObservacao').value.trim();
+  const placa = normPlaca(document.getElementById('inputPlaca').value);
 
   let ok = true;
   ok = validateField('field-data', !!data) && ok;
   ok = validateField('field-funcionario', !!funcId) && ok;
   ok = validateField('field-valor', !isNaN(valor) && valor>0) && ok;
+  ok = validateField('field-placa', !placa || isPlacaValida(placa)) && ok;
   if(!ok) return;
 
   const submitBtn = e.target.querySelector('button[type="submit"]');
   submitBtn.disabled = true; submitBtn.textContent = 'Salvando...';
   try{
-    await Api.post('saveAbastecimento', { funcionario_id: funcId, data_abastecimento: data, valor, observacao: obs });
+    await Api.post('saveAbastecimento', { funcionario_id: funcId, data_abastecimento: data, valor, observacao: obs, placa });
     await loadDB();
     showToast('Abastecimento registrado com sucesso.');
     resetFormAbastecimento();
@@ -1276,6 +1286,15 @@ document.getElementById('formAbastecimento').addEventListener('submit', async e=
     submitBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L20 7" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/></svg> Salvar abastecimento';
   }
 });
+
+/* ============================================================
+   PLACA DO VEÍCULO (padrão antigo ABC-1234 e Mercosul ABC1D23)
+============================================================ */
+function normPlaca(v){ return String(v||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,7); }
+function isPlacaValida(p){ return /^[A-Z]{3}[0-9]{4}$/.test(p) || /^[A-Z]{3}[0-9][A-Z][0-9]{2}$/.test(p); }
+function formatPlaca(v){ const p = normPlaca(v); return p.length>3 ? p.slice(0,3)+'-'+p.slice(3) : p; }
+function placaTag(v){ const p = formatPlaca(v); return p ? `<span class="placa-tag">${p}</span>` : '—'; }
+document.getElementById('inputPlaca').addEventListener('input', e=>{ e.target.value = formatPlaca(e.target.value); });
 
 /* ============================================================
    FORM HELPERS
@@ -1338,7 +1357,7 @@ function getFilteredHistorico(){
     if(fFim && a.data_abastecimento > fFim) return false;
     if(!isNaN(fMin) && a.valor < fMin) return false;
     if(!isNaN(fMax) && a.valor > fMax) return false;
-    if(term && !(f && f.nome.toLowerCase().includes(term))) return false;
+    if(term && !((f && f.nome.toLowerCase().includes(term)) || (a.placa||'').toLowerCase().includes(term.replace(/[^a-z0-9]/g,'')))) return false;
     return true;
   });
 }
@@ -1355,11 +1374,12 @@ function renderHistorico(){
     return `<tr>
       <td>${fmtDate(a.data_abastecimento)}</td>
       <td>${f?f.nome:'—'}</td>
+      <td>${placaTag(a.placa)}</td>
       <td class="mono">${fmtBRL(a.valor)}</td>
       <td>${a.observacao||'—'}</td>
       <td><button class="icon-btn danger" title="Excluir" onclick="confirmDeleteAbastecimento('${a.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0l-1 14a2 2 0 01-2 2H7a2 2 0 01-2-2L4 6h16z"/></svg></button></td>
     </tr>`;
-  }).join('') : `<tr><td colspan="5" class="table-empty">Nenhum abastecimento encontrado com os filtros aplicados.</td></tr>`;
+  }).join('') : `<tr><td colspan="6" class="table-empty">Nenhum abastecimento encontrado com os filtros aplicados.</td></tr>`;
 }
 
 function confirmDeleteAbastecimento(id){
@@ -1450,8 +1470,8 @@ function renderRelatorioFuncionario(){
     <div class="kpi-card"><div class="kpi-label">Média de gasto</div><div class="kpi-value">${fmtBRL(media)}</div></div>
     <div class="kpi-card"><div class="kpi-label">Último abastecimento</div><div class="kpi-value small">${ultimo?fmtDate(ultimo.data_abastecimento):'—'}</div></div>`;
   document.querySelector('#tabelaRelFuncionario tbody').innerHTML = regs.length ? regs.map(a=>`
-    <tr><td>${fmtDate(a.data_abastecimento)}</td><td class="mono">${fmtBRL(a.valor)}</td><td>${a.observacao||'—'}</td></tr>`).join('')
-    : `<tr><td colspan="3" class="table-empty">Nenhum abastecimento registrado para este funcionário.</td></tr>`;
+    <tr><td>${fmtDate(a.data_abastecimento)}</td><td>${placaTag(a.placa)}</td><td class="mono">${fmtBRL(a.valor)}</td><td>${a.observacao||'—'}</td></tr>`).join('')
+    : `<tr><td colspan="4" class="table-empty">Nenhum abastecimento registrado para este funcionário.</td></tr>`;
 }
 
 function renderRelatorioMensal(){
@@ -1489,8 +1509,8 @@ function gerarRelatorioPeriodo(){
     <div class="kpi-card"><div class="kpi-label">Quantidade de registros</div><div class="kpi-value">${regs.length}</div></div>`;
   document.querySelector('#tabelaRelPeriodo tbody').innerHTML = regs.length ? regs.map(a=>{
     const f = funcById(a.funcionario_id);
-    return `<tr><td>${fmtDate(a.data_abastecimento)}</td><td>${f?f.nome:'—'}</td><td class="mono">${fmtBRL(a.valor)}</td><td>${a.observacao||'—'}</td></tr>`;
-  }).join('') : `<tr><td colspan="4" class="table-empty">Nenhum registro no período selecionado.</td></tr>`;
+    return `<tr><td>${fmtDate(a.data_abastecimento)}</td><td>${f?f.nome:'—'}</td><td>${placaTag(a.placa)}</td><td class="mono">${fmtBRL(a.valor)}</td><td>${a.observacao||'—'}</td></tr>`;
+  }).join('') : `<tr><td colspan="5" class="table-empty">Nenhum registro no período selecionado.</td></tr>`;
 }
 
 /* ============================================================
@@ -1506,7 +1526,7 @@ function exportExcelFuncionario(){
   const id = document.getElementById('relFuncionarioSelect').value;
   const f = funcById(id);
   if(!f){ showToast('Nenhum funcionário selecionado.', true); return; }
-  const regs = abastecimentosOf(id).map(a=>({Data:fmtDate(a.data_abastecimento), Valor:a.valor, Observação:a.observacao||''}));
+  const regs = abastecimentosOf(id).map(a=>({Data:fmtDate(a.data_abastecimento), Placa:a.placa||'', Valor:a.valor, Observação:a.observacao||''}));
   exportToExcel(regs, `relatorio_${f.nome.replace(/\s+/g,'_')}.xlsx`, f.nome);
   showToast('Relatório exportado.');
 }
@@ -1514,7 +1534,7 @@ function exportExcelMensal(){
   const mk = document.getElementById('relMesSelect').value;
   const regs = DB.abastecimentos.filter(a=>monthKey(a.data_abastecimento)===mk).map(a=>{
     const f = funcById(a.funcionario_id);
-    return {Data:fmtDate(a.data_abastecimento), Funcionário:f?f.nome:'—', Valor:a.valor, Observação:a.observacao||''};
+    return {Data:fmtDate(a.data_abastecimento), Funcionário:f?f.nome:'—', Placa:a.placa||'', Valor:a.valor, Observação:a.observacao||''};
   });
   exportToExcel(regs, `relatorio_mensal_${mk}.xlsx`, 'Mensal');
   showToast('Relatório exportado.');
@@ -1524,7 +1544,7 @@ function exportExcelPeriodo(){
   if(!ini||!fim){ showToast('Gere o relatório antes de exportar.', true); return; }
   const regs = DB.abastecimentos.filter(a=>a.data_abastecimento>=ini && a.data_abastecimento<=fim).map(a=>{
     const f = funcById(a.funcionario_id);
-    return {Data:fmtDate(a.data_abastecimento), Funcionário:f?f.nome:'—', Valor:a.valor, Observação:a.observacao||''};
+    return {Data:fmtDate(a.data_abastecimento), Funcionário:f?f.nome:'—', Placa:a.placa||'', Valor:a.valor, Observação:a.observacao||''};
   });
   exportToExcel(regs, `relatorio_periodo_${ini}_a_${fim}.xlsx`, 'Período');
   showToast('Relatório exportado.');
