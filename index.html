@@ -289,7 +289,11 @@ tbody tr:hover{background:var(--surface-2);}
   .panel, .kpi-card, .modal{background:#FFFFFF !important; box-shadow:none !important; border-color:#DCE2EA !important;}
   h1,h2,h3,h4,.kpi-value,.rank-info span:last-child{color:#0B1F3A !important;}
   td,th{color:#1C2733 !important; border-color:#DCE2EA !important;}
-  .view{display:block !important;}
+  /* imprime SOMENTE a tela ativa (antes todas as telas entravam no PDF e geravam páginas em branco) */
+  .view{display:none !important;}
+  .view.active{display:block !important; animation:none !important;}
+  html, body, #app, .main{display:block !important; height:auto !important; min-height:0 !important; overflow:visible !important;}
+  .overlay, .toast{display:none !important;}
 
   /* ===== PAGINAÇÃO MULTI-PÁGINA ===== */
   .table-wrap{overflow:visible !important;}
@@ -744,7 +748,7 @@ async function loadDB(){
       showToast('Apps Script desatualizado: cole o novo código e crie uma NOVA IMPLANTAÇÃO para salvar modelo e placa.', true);
     }
     DB.funcionarios = (data.funcionarios||[]).map(f=>({...f, id:String(f.id), modelo:String(f.modelo||''), placa:formatPlaca(f.placa)}));
-    DB.abastecimentos = (data.abastecimentos||[]).map(a=>({...a, id:String(a.id), funcionario_id:String(a.funcionario_id), valor:Number(a.valor)}));
+    DB.abastecimentos = (data.abastecimentos||[]).map(a=>({...a, id:String(a.id), funcionario_id:String(a.funcionario_id), valor:Number(a.valor), data_abastecimento:normDate(a.data_abastecimento)}));
     setSyncBadge('ok');
     return true;
   }catch(e){
@@ -829,6 +833,14 @@ function renderCurrentView(){
 ============================================================ */
 function uid(){ return 'id'+Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
 function fmtBRL(v){ return new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(v||0); }
+function normDate(v){
+  if(!v) return '';
+  v = String(v);
+  if(/^\d{4}-\d{2}-\d{2}$/.test(v)) return v;
+  const d = new Date(v);
+  if(isNaN(d)) return v.slice(0,10);
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
 function fmtDate(iso){ if(!iso) return '—'; const [y,m,d]=iso.split('-'); return `${d}/${m}/${y}`; }
 function todayISO(){ return new Date().toISOString().slice(0,10); }
 function monthKey(iso){ return iso ? iso.slice(0,7) : ''; }
